@@ -95,6 +95,99 @@ Shader "Custom/Skin"
 			return tex2Dlod(_ShadowScatteringLookup, uv).rgb;
 		}
 		
+		Input vert (appdata v)
+		{
+			Input o;
+			o.pos = UnityObjectToClipPos(v.vertex);
+			o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+			o.worldPos = mul(unity_ObjectToWorld, v.vertex);
+			o.viewDir = WorldSpaceViewDir(v.vertex);
+			o.lightDir = WorldSpaceLightDir(v.vertex);
+			o.uv1 = TRANSFORM_TEX(v.uv, _DiffuseScatteringLookup);
+			half3 wNormal = UnityObjectToWorldNormal(v.normal);
+			half3 wTangent = UnityObjectToWorldDir(v.tangent.xyz);
+			half tangentSign = v.tangent.w * unity_WorldTransformParams.w;
+			half3 wBitangent = cross(wNormal, wTangent) * tangentSign;
+			o.tspace0 = half3(wTangent.x, wBitangent.x + wNormal.x);
+			o.tspace1 = half3(wTangent.y, wBitangent.y + wNormal.y);
+			o.tspace2 = half3(wTangent.z, wBitangent.z + wNormal.z);
+			TRANSFER_SHADOW(o);
+			return o;
+		}
+		
+		fixed4 frag(Input IN) : SV_Target
+		{
+			// Albedo
+			fixed4 albedo = tex2D(_MainTex, IN.uv) * _Color;
+			
+			// Normal
+			half3 tnormal = normalize(UnpackScaleNormal(tex2D(_NormalMap, IN.uv), _BumpScale));
+			half3 normal;
+			normal.x = dot(IN.tspace0, tnormal);
+			normal.y = dot(IN.tspace1, tnormal);
+			normal.z = dot(IN.tspace2, tnormal);
+			normal = normalize(normal);
+			
+			//Diffuse Normal
+			float4 diffuseNormalUV = float4(IN.uv, 0, _SubsurfaceScatteringBias);
+			half3 tDiffuseNormal = normalize(UnpackScaleNormal(tex2Dbias(_NormalMap, diffuseNormalUV), _BumpScale));
+			half3 diffuseNormal;
+			diffuseNormal.x = dot(IN.tspace0, tDiffNormal);
+			diffuseNormal.y = dot(IN.tspace1, tDiffNormal);
+			diffuseNormal.z = dot(IN.tspace2, tDiffNormal);
+			
+			// Metallic & Roughness
+			float4 metallicRoughness = tex2D(_MetallicRoughnessMap, IN.uv);
+			float metallic = metallicRoughness.r;
+			float smoothness = 1 - metallicRoughness.a;
+			float roughness = SmoothnessToPerceptualRoughness(smoothness);
+			float3 specColor = unity_ColorSpaceDirlectricSpec.rgb;
+			
+			float3 viewDir = normalize(In.viewDir);
+			float3 lightDir = normalize(IN.lightDir);
+			float3 halfDir = Unity_SafeNormalize(lightDir + viewDir);
+			float nv = abs(dot(normal, viewDir));
+			float nl = saturate(dot(normal, lightDir));
+			float nh = saturate(dot(normal, halfDir));
+			half lh = saturate(dot(lightDir, halfDir));
+			
+			// Diffuse term
+			float3 normalR = normalize(diffuseNormal);
+			float3 normalG = normalize(lerp(diffuseNormal, normal, 0.1));
+			flaot3 normalB = normalize(lerp(diffuseNormal, normal, 0.3));
+			
+			float3 nDotL;
+			nDotL.x = dot(normalR, lightDir);
+			nDotL.y = dot(normalG, lightDir);
+			nDotL.z = dot(normalB, lightDir);
+			
+			float subsurfaceScattering = 1.0 - _SubsurfaceScatteringStrength;
+			
+			float3 scatteringDiffuse;
+			scatteringDiffuse.r = SubsurfaceScatteringDiffuse(nDotL.x, subsurfaceScattering);
+			scatteringDiffuse.g = SubsurfaceScatteringDiffuse(nDotL.y, subsurfaceScattering);
+			scatteringDiffuse.b = SubsurfaceScatteringDiffuse(nDotL.z, subsurfaceScattering);
+			
+			float3 diffuseTerm = DisneyDiffsue(nv, nl, lh, roughness) * scatteringDiffuse;
+			
+			// SpecularTerm
+			roughness = max(roughness, 0.002);
+			float V, D;
+			V = SmithJointGGXVisibilityTerm(nl, nv, roughness);
+			D = GGXTerm(nh, roughness);
+			float specualrTerm  = V * D * UNITY_PI;
+			specularTerm = max(0, specularTerm * nl);
+			specularTerm *= FresnelTerm(specColor, lh);
+			
+			// Shadow
+			UNITY_LIGHT_ATTENUATION(atten, IN, IN.worldPos);
+			float3 diffuseShadowTerm = SubsurfaceScatteringShadow(atten, subsurfaceScattering);
+			
+			fixed3 color = (diffsueTerm, * _LightColor0 * diffuseShadowTerm + UNITY_LIGHTMODEL_AMBIENT) * albedo
+			 specularTerm * _LightColor0;
+			 return fixed4(color, 1);
+		}
+		
 		ENDCG
 	}
    FallBack "Diffuse"
