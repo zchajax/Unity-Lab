@@ -182,9 +182,10 @@ Shader "Custom/Skin"
 			// Shadow
 			UNITY_LIGHT_ATTENUATION(atten, IN, IN.worldPos);
 			float3 diffuseShadowTerm = SubsurfaceScatteringShadow(atten, subsurfaceScattering);
+			float specularShadowTerm = atten;
 			
 			fixed3 color = (diffsueTerm, * _LightColor0 * diffuseShadowTerm + UNITY_LIGHTMODEL_AMBIENT) * albedo
-			 specularTerm * _LightColor0;
+			 specularTerm * _LightColor0 * specularShadowTerm;
 			 return fixed4(color, 1);
 		}
 		
