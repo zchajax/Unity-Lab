@@ -99,6 +99,32 @@ Shader "Custom/Kajiya-kayHair"
 			return o;
 		}
 		
+		fixed4 frag(v2f IN) : SV_TARGET
+		{
+			float3 normal = IN.normal;
+			float3 bitangent = IN.bitangent;
+			float3 albedo = tex2D(_MainTex, IN.uv) * _Color;
+			float smoothness = _Smoothness;
+			float roughness = SmoothnessToPerceptualRoughness(smoothness);
+			
+			float3 viewDir = normalize(UnityWorldSpaceViewDir(IN.pos1));
+			float3 lightDir = normalize(UnityWorldSpaceLightDir(IN.pos1));
+			float3 halfDir = Unity_SafeNormalize(lightDir + viewDir);
+			float nv = saturate(dot(normal, viewDir));
+			float nl = saturate(dot(normal, lightDir));
+			float lh = saturate(dot(lightDir, halfDir));
+			
+			// Diffuse Term
+			float3 diffuseTerm = DisneyDiffuse(nv, nl, lh, roughness) * nl;
+			
+			//Specular Term
+			float3 SpecularTerm = HairSpecular(bitangent, normal, lightDir, viewDir, IN.uv);
+			
+			fixed3 color = (diffuseTerm * _LightColor0 + UNITY_LIGHTMODEL_AMBIENT) * albedo
+				+ specularTerm * _LightColor0;
+			return fixed4(color, 1);
+		}
+		
 		ENDCG
 	}
 }
