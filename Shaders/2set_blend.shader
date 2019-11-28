@@ -35,18 +35,18 @@ Shader "Custom/2set_blend"
 		float4 _Color;
 		float4 _ColorB;		
 
-		struct v2f
-		{
-			float4 pos : SV_POSITION;
-			fixed4 color : COLOR;
-		}
+        struct v2f
+        {
+            float4 pos : SV_POSITION;
+            fixed4 color : COLOR;
+        };
 
-		struct Input
-		{
-			float2 uv_MainTex;
-			float2 uv_AlbedoB;
-			float3 vertexColor;
-		}
+        struct Input
+        {
+            float2 uv_MainTex;
+            float2 uv_AlbedoB;
+            float3 vertexColor;
+        };
 
 		void vert (inout appdata_full v, out Input o)
 		{
@@ -57,14 +57,14 @@ Shader "Custom/2set_blend"
 		void surf (Input IN, inout SurfaceOutputStandard o)
 		{
 			float4 blendMask = IN.vertexColor.x;
-			half4 albedoA = _Color * UNITY_SAMPLER_TEX2D(_MainTex, IN.uv_MainTex);
-			half4 albedoB = _ColorB * UNITY_SAMPLER_TEX2D(_AlbedoB, IN.uv_AlbedoB);
+			half4 albedoA = _Color * UNITY_SAMPLE_TEX2D(_MainTex, IN.uv_MainTex);
+			half4 albedoB = _ColorB * UNITY_SAMPLE_TEX2D(_AlbedoB, IN.uv_AlbedoB);
 			o.Albedo = lerp(albedoB, albedoA, blendMask);
 
 			half4 metalSmoothA = UNITY_SAMPLE_TEX2D_SAMPLER(_MetallicGlossMap, _MainTex, IN.uv_MainTex);
 			half4 metalSmoothB = UNITY_SAMPLE_TEX2D_SAMPLER(_MetallicGlossMapB, _AlbedoB, IN.uv_AlbedoB);
 			o.Metallic = lerp(metalSmoothB.r, metalSmoothA.r, blendMask);
-			o.Smoothness 1 - lerp(metalSmoothB.a, metalSmoothA.a, blendMask);
+			o.Smoothness = 1 - lerp(metalSmoothB.a, metalSmoothA.a, blendMask);
 
 			float3 normalA = UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_BumpMap, _MainTex, IN.uv_MainTex));
 			float3 normalB = UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_BumpMapB, _AlbedoB, IN.uv_AlbedoB));

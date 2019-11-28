@@ -75,19 +75,19 @@ Shader "Custom/4sets_blend"
 			float3 mask = UNITY_SAMPLE_TEX2D(_Mask, IN.uv2_Mask).rgb;
 
 			float3 albedoB	= UNITY_SAMPLE_TEX2D(_BaseAlbe, IN.uv_BaseAlbe);
-			float3 albedoL1 = UNITY_SAMPLE_TEX2D_SAMPLER(_AlbeR, _BaseAlbe, IN.uv_AlbeR); 
-			float3 albedoL2 = UNITY_SAMPLE_TEX2D_SAMPLER(_AlbeG, _BaseAlbe, IN.uv_AlbeG); 
-			float3 albedoL3 = UNITY_SAMPLE_TEX2D_SAMPLER(_AlbeB, _BaseAlbe, IN.uv_AlbeB); 
+			float3 albedo1 = UNITY_SAMPLE_TEX2D_SAMPLER(_AlbeR, _BaseAlbe, IN.uv_AlbeR); 
+			float3 albedo2 = UNITY_SAMPLE_TEX2D_SAMPLER(_AlbeG, _BaseAlbe, IN.uv_AlbeG); 
+			float3 albedo3 = UNITY_SAMPLE_TEX2D_SAMPLER(_AlbeB, _BaseAlbe, IN.uv_AlbeB); 
 
 			float3 normalB	= UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_BaseNormal, _BaseAlbe, IN.uv_BaseAlbe));
-			float3 normalL1	= UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_NormalR, _BaseAlbe, IN.uv_AlbeR));
-			float3 normalL2	= UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_NormalG, _BaseAlbe, IN.uv_AlbeG));
-			float3 normalL3	= UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_NormalB, _BaseAlbe, IN.uv_AlbeB));
+			float3 normal1	= UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_NormalR, _BaseAlbe, IN.uv_AlbeR));
+			float3 normal2	= UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_NormalG, _BaseAlbe, IN.uv_AlbeG));
+			float3 normal3	= UnpackNormal(UNITY_SAMPLE_TEX2D_SAMPLER(_NormalB, _BaseAlbe, IN.uv_AlbeB));
 
 			float2 metallicRoughnessB  = UNITY_SAMPLE_TEX2D_SAMPLER(_BaseMetRough, _BaseAlbe, IN.uv_BaseAlbe).rg;
-			float2 metallicRoughnessL1 = UNITY_SAMPLE_TEX2D_SAMPLER(_MetRoughR, _BaseAlbe, IN.uv_AlbeR).rg;
-			float2 metallicRoughnessL2 = UNITY_SAMPLE_TEX2D_SAMPLER(_MetRoughG, _BaseAlbe, IN.uv_AlbeG).rg;
-			float2 metallicRoughnessL3 = UNITY_SAMPLE_TEX2D_SAMPLER(_MetRoughB, _BaseAlbe, IN.uv_AlbeB).rg;
+			float2 metallicRoughness1 = UNITY_SAMPLE_TEX2D_SAMPLER(_MetRoughR, _BaseAlbe, IN.uv_AlbeR).rg;
+			float2 metallicRoughness2 = UNITY_SAMPLE_TEX2D_SAMPLER(_MetRoughG, _BaseAlbe, IN.uv_AlbeG).rg;
+			float2 metallicRoughness3 = UNITY_SAMPLE_TEX2D_SAMPLER(_MetRoughB, _BaseAlbe, IN.uv_AlbeB).rg;
 
 			float3 oneMinusMask = 1 - mask;
 
@@ -97,21 +97,21 @@ Shader "Custom/4sets_blend"
 			float M3 = mask.b;
 
 			float3 albedo = MB * albedoB + 
-					M1 * albedoL1 + 
-					M2 * albedoL2 + 
-					M3 * albedoL3;
+					M1 * albedo1 + 
+					M2 * albedo2 + 
+					M3 * albedo3;
 
 			float3 normal = MB * normalB + 
-					M1 * normalL1 +  
-					M2 * normalL2 +  
-					M3 * normalL3;
+					M1 * normal1 +  
+					M2 * normal2 +  
+					M3 * normal3;
 
 			normal = normalize(normal);
 
 			float2 metallicRoughness = MB * metallicRoughnessB +
-						   M1 * metallicRoughnessL1 +
-						   M2 * metallicRoughnessL2 +
-						   M3 * metallicRoughnessL3;
+						   M1 * metallicRoughness1 +
+						   M2 * metallicRoughness2 +
+						   M3 * metallicRoughness3;
 
 			o.Albedo = albedo;
 			o.Normal = normal;
