@@ -1,4 +1,4 @@
-﻿Shader "Unlit/WireFrame"
+﻿Shader "Custom/WireFrame"
 {
     Properties
     {
