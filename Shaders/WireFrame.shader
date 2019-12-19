@@ -1,10 +1,11 @@
-﻿Shader "Custom/WireFrame"
+﻿Shader "Unlit/WireFrame"
 {
     Properties
     {
         _WireframeColor ("Wireframe Color", Color) = (0, 0, 0)
 		_WireframeSmoothing ("Wireframe Smoothing", Range(0, 10)) = 1
 		_WireframeThickness ("Wireframe Thickness", Range(0, 10)) = 0
+        [Enum(UnityEngine.Rendering.CullMode)]_Culling("Culling", Float) = 0
     }
     SubShader
     {
@@ -15,7 +16,7 @@
 		}
 
         LOD 100
-
+        Cull [_Culling]
 		Zwrite Off
 		Blend SrcAlpha OneMinusSrcAlpha
 
