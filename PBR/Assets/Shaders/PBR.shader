@@ -50,6 +50,13 @@
             }
 #endif
 
+#if _DIFFUSE_DISNEY
+            float3 disney(float3 baseColor, float roughness, float hl, float nl, float nv)
+            {
+				float fd90 = 0.5 + 2 * pow(hl, 2) * roughness;
+				return  baseColor / PI * (1 + (fd90 - 1) * pow(1 - nl, 5)) * (1 + (fd90 - 1) * pow(1 - nv, 5)); 
+			}
+#endif
             
             v2f vert (appdata v)
             {
@@ -63,13 +70,26 @@
             fixed4 frag (v2f i) : SV_Target
             {
                 float3 albedo = _Albedo;
+                float roughness = _Roughness;
                 float3 lightDir = normalize(UnityWorldSpaceLightDir(i.worldPos));
+                float3 viewDir = normalize(UnityWorldSpaceViewDir(i.worldPos));
                 float3 normal = normalize(i.worldNormal);
+                float3 halfVector = normalize(lightDir + viewDir);
+                
+                
                 float nl = saturate(dot(normal, lightDir));
+                float nh = saturate(dot(normal, halfVector));
+                float hl = saturate(dot(halfVector, lightDir));
+                float nv = saturate(dot(normal, viewDir));
+
                 float3 diffuseTerm = 0;
 
                 #if _DIFFUSE_LAMBERT
                     diffuseTerm = lambert(albedo);
+                #endif
+
+                #if _DIFFUSE_DISNEY
+                    diffuseTerm = disney(albedo, roughness, hl, nl, nv); 
                 #endif
 
                 float3 specularTerm = 0;
