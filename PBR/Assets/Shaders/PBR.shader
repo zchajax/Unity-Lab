@@ -57,6 +57,18 @@
 				return  baseColor / PI * (1 + (fd90 - 1) * pow(1 - nl, 5)) * (1 + (fd90 - 1) * pow(1 - nv, 5)); 
 			}
 #endif
+
+#if _DIFFUSE_OREN_NAYER
+            float3 orenNayer(float3 albedo, float sigma, float nl, float nv, float lv)
+            {
+                float sigma_2 = pow(sigma, 2);
+				float A = 1 - 0.5 * sigma_2 / (sigma_2 + 0.33) + 0.17 * albedo * sigma_2 / (sigma_2 + 0.13);
+				float B = 0.45 * sigma_2 / (sigma_2 + 0.09);
+				float s = lv - nl * nv;
+				float t = s <= 0 ? 1 : max(nl, nv);
+                return albedo / PI * (A + B * s / t);
+            }
+#endif
             
             v2f vert (appdata v)
             {
@@ -81,6 +93,7 @@
                 float nh = saturate(dot(normal, halfVector));
                 float hl = saturate(dot(halfVector, lightDir));
                 float nv = saturate(dot(normal, viewDir));
+                float lv = saturate(dot(lightDir, viewDir));
 
                 float3 diffuseTerm = 0;
 
@@ -90,6 +103,11 @@
 
                 #if _DIFFUSE_DISNEY
                     diffuseTerm = disney(albedo, roughness, hl, nl, nv); 
+                #endif
+
+                #if _DIFFUSE_OREN_NAYER
+                    float sigma = pow(roughness, 2) * PI / 2;
+                    diffuseTerm = orenNayer(albedo, sigma, nl, nv, lv);
                 #endif
 
                 float3 specularTerm = 0;
