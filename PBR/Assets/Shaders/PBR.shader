@@ -5,6 +5,7 @@
         _Albedo("Albedo", Color) = (1, 1, 1, 1)
         _Specular("Specular", Color) = (1, 1, 1, 1)
         _Roughness("Roughness", Range(0.0001, 1)) = 0.5
+        _Shininess("Shininess", Range(1, 600)) = 50
     }
     SubShader
     {
@@ -22,6 +23,7 @@
             #define PI 3.14159265358979323846264338327950288419716939937510
 
             #pragma shader_feature __ _DIFFUSE_LAMBERT _DIFFUSE_DISNEY _DIFFUSE_OREN_NAYER
+            #pragma shader_feature __ _PHONG _BLINN_PHONG _GGX _BECKMAN
 
             #include "UnityCG.cginc"
             #include "Lighting.cginc"
@@ -42,6 +44,7 @@
             float4 _Albedo;
             float4 _Specular;
             float  _Roughness;
+            float  _Shininess;
 
 #if _DIFFUSE_LAMBERT
             float3 lambert(float albedo)
@@ -69,7 +72,14 @@
                 return albedo / PI * (A + B * s / t);
             }
 #endif
-            
+
+#if _PHONG
+            float3 phong(float vr)
+            {
+                return pow(vr, _Shininess);
+            }
+#endif
+
             v2f vert (appdata v)
             {
                 v2f o;
@@ -111,6 +121,12 @@
                 #endif
 
                 float3 specularTerm = 0;
+
+                #if _PHONG
+                    float3 reflectDir = normalize(reflect(-lightDir, normal));
+                    float vr = max(0, dot(viewDir, reflectDir));
+                    specularTerm = phong(vr);
+                #endif
                 
                 float3 ambient = UNITY_LIGHTMODEL_AMBIENT.rgb * albedo.rgb;
 

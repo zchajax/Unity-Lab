@@ -13,6 +13,11 @@ public class PBRShaderGUI : ShaderGUI
         None, Lambert, Disney, Oren_Nayar
     }
 
+    enum SpecularMode
+    {
+        None, Phong, Blinn_Phong, GGX, Beckman
+    }
+
     static GUIContent staticLabel = new GUIContent();
 
     static GUIContent MakeLabel(string text, string tooltip = null)
@@ -29,6 +34,8 @@ public class PBRShaderGUI : ShaderGUI
         this.properties = properties;
 
         DoDiffuseMode();
+
+        DoSpecularMode();
 
         base.OnGUI(materialEditor, properties);
     }
@@ -58,6 +65,39 @@ public class PBRShaderGUI : ShaderGUI
             SetKeyword("_DIFFUSE_LAMBERT", source == DiffuseMode.Lambert);
             SetKeyword("_DIFFUSE_DISNEY", source == DiffuseMode.Disney);
             SetKeyword("_DIFFUSE_OREN_NAYER", source == DiffuseMode.Oren_Nayar);
+        }
+    }
+
+    void DoSpecularMode()
+    {
+        SpecularMode source = SpecularMode.None;
+        if (IsKeywordEnabled("_PHONG"))
+        {
+            source = SpecularMode.Phong;
+        }
+        else if (IsKeywordEnabled("_BLINN_PHONG"))
+        {
+            source = SpecularMode.Blinn_Phong;
+        }
+        else if (IsKeywordEnabled("_GGX"))
+        {
+            source = SpecularMode.GGX;
+        }
+        else if (IsKeywordEnabled("_BECKMAN"))
+        {
+            source = SpecularMode.Beckman;
+        }
+
+        EditorGUI.BeginChangeCheck();
+        source = (SpecularMode)EditorGUILayout.EnumPopup(
+            MakeLabel("Specular Mode"), source
+        );
+        if (EditorGUI.EndChangeCheck())
+        {
+            SetKeyword("_PHONG", source == SpecularMode.Phong);
+            SetKeyword("_BLINN_PHONG", source == SpecularMode.Blinn_Phong);
+            SetKeyword("_GGX", source == SpecularMode.GGX);
+            SetKeyword("_BECKMAN", source == SpecularMode.Beckman);
         }
     }
 
