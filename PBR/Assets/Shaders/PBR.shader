@@ -46,39 +46,46 @@
             float  _Roughness;
             float  _Shininess;
 
-#if _DIFFUSE_LAMBERT
-            float3 lambert(float albedo)
-            {
-                return albedo / PI;
-            }
-#endif
+            #if _DIFFUSE_LAMBERT
+                float3 lambert(float albedo)
+                {
+                    return albedo / PI;
+                }
+            #endif
 
-#if _DIFFUSE_DISNEY
-            float3 disney(float3 baseColor, float roughness, float hl, float nl, float nv)
-            {
-				float fd90 = 0.5 + 2 * pow(hl, 2) * roughness;
-				return  baseColor / PI * (1 + (fd90 - 1) * pow(1 - nl, 5)) * (1 + (fd90 - 1) * pow(1 - nv, 5)); 
-			}
-#endif
+            #if _DIFFUSE_DISNEY
+                float3 disney(float3 baseColor, float roughness, float hl, float nl, float nv)
+                {
+				    float fd90 = 0.5 + 2 * pow(hl, 2) * roughness;
+				    return  baseColor / PI * (1 + (fd90 - 1) * pow(1 - nl, 5)) * (1 + (fd90 - 1) * pow(1 - nv, 5)); 
+			    }
+            #endif
 
-#if _DIFFUSE_OREN_NAYER
-            float3 orenNayer(float3 albedo, float sigma, float nl, float nv, float lv)
-            {
-                float sigma_2 = pow(sigma, 2);
-				float A = 1 - 0.5 * sigma_2 / (sigma_2 + 0.33) + 0.17 * albedo * sigma_2 / (sigma_2 + 0.13);
-				float B = 0.45 * sigma_2 / (sigma_2 + 0.09);
-				float s = lv - nl * nv;
-				float t = s <= 0 ? 1 : max(nl, nv);
-                return albedo / PI * (A + B * s / t);
-            }
-#endif
+            #if _DIFFUSE_OREN_NAYER
+                float3 orenNayer(float3 albedo, float sigma, float nl, float nv, float lv)
+                {
+                    float sigma_2 = pow(sigma, 2);
+				    float A = 1 - 0.5 * sigma_2 / (sigma_2 + 0.33) + 0.17 * albedo * sigma_2 / (sigma_2 + 0.13);
+				    float B = 0.45 * sigma_2 / (sigma_2 + 0.09);
+				    float s = lv - nl * nv;
+				    float t = s <= 0 ? 1 : max(nl, nv);
+                    return albedo / PI * (A + B * s / t);
+                }
+            #endif
 
-#if _PHONG
-            float3 phong(float vr)
-            {
-                return pow(vr, _Shininess);
-            }
-#endif
+            #if _PHONG
+                float3 phong(float vr)
+                {
+                    return pow(vr, _Shininess);
+                }
+            #endif
+
+            #if _BLINN_PHONG
+                float3 blinnPhong(float nh)
+                {
+                    return pow(nh, _Shininess);
+                }
+            #endif
 
             v2f vert (appdata v)
             {
@@ -126,6 +133,10 @@
                     float3 reflectDir = normalize(reflect(-lightDir, normal));
                     float vr = max(0, dot(viewDir, reflectDir));
                     specularTerm = phong(vr);
+                #endif
+
+                #if _BLINN_PHONG
+                    specularTerm = blinnPhong(nh);
                 #endif
                 
                 float3 ambient = UNITY_LIGHTMODEL_AMBIENT.rgb * albedo.rgb;
