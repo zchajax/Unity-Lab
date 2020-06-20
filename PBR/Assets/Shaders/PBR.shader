@@ -87,6 +87,32 @@
                 }
             #endif
 
+            #if _GGX
+                half3 fresnelTerm(half3 F0, float cosA)
+                {
+                    half t = pow (1 - cosA, 5); 
+                    return F0 + (1 - F0) * t;
+                }
+
+                half3 GGX_NDF(float nh, float roughness)
+                {
+                    float a2 = roughness * roughness;
+                    float d = (nh * a2 - nh) * nh + 1.0f;
+                    return UNITY_INV_PI * a2 / (d * d + 1e-7f);
+                }
+
+                half3 GGX_VisibilityTerm(float nl, float nv, float roughness)
+                {
+                    float a = roughness;
+                    float lambdaV = nl * (nv * (1 - a) + a);
+                    float lambdaL = nv * (nl * (1 - a) + a);
+
+                    return 0.5f / (lambdaV + lambdaL + 1e-5f);
+                }
+                
+                
+            #endif
+
             v2f vert (appdata v)
             {
                 v2f o;
@@ -111,6 +137,7 @@
                 float hl = saturate(dot(halfVector, lightDir));
                 float nv = saturate(dot(normal, viewDir));
                 float lv = saturate(dot(lightDir, viewDir));
+                float vh = saturate(dot(viewDir, halfVector));
 
                 float3 diffuseTerm = 0;
 
@@ -137,6 +164,15 @@
 
                 #if _BLINN_PHONG
                     specularTerm = blinnPhong(nh);
+                #endif
+
+                #if _GGX
+                    roughness = max(roughness, 0.002);
+                    float3 D = GGX_NDF(nh, roughness);
+                    float3 V = GGX_VisibilityTerm(nl, nv, roughness);
+                    float3 F = fresnelTerm(_Specular, hl);
+                    specularTerm = D * V * F * UNITY_PI;
+                    specularTerm = max(0, specularTerm);
                 #endif
                 
                 float3 ambient = UNITY_LIGHTMODEL_AMBIENT.rgb * albedo.rgb;

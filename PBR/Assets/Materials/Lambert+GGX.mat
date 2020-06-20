@@ -7,9 +7,9 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Disney+BlinnPhong
+  m_Name: Lambert+GGX
   m_Shader: {fileID: 4800000, guid: 092be5cb6b02b4263b5b10e4be269de4, type: 3}
-  m_ShaderKeywords: _BLINN_PHONG _DIFFUSE_DISNEY
+  m_ShaderKeywords: _DIFFUSE_LAMBERT _GGX
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -67,7 +67,7 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _Roughness: 0.0001
+    - _Roughness: 0.059
     - _Shininess: 50
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
